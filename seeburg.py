@@ -35,7 +35,7 @@ class Seeburg(PCF8574):
             return 1
 
 class SeeburgThread(threading.Thread):
-    def __init__(self, bus, addr):
+    def __init__(self, bus, addr, vfd=None):
         super(SeeburgThread, self).__init__()
         self.seeburg = Seeburg(bus, addr)
 
@@ -48,6 +48,11 @@ class SeeburgThread(threading.Thread):
         self.pre_gap_count = 0
         self.post_gap_count = 0
         self.after_gap = False
+
+        self.vfd = vfd
+        self.last_vfd_1 = True
+        self.last_vfd_2 = True
+        self.last_vfd_3 = True
 
     def insert_quarter(self):
         self.quarter_signal = True
@@ -63,6 +68,9 @@ class SeeburgThread(threading.Thread):
         last_tick_time = time.time()
 
         while True:
+            if self.vfd:
+                self.poll_vfd()
+
             if (self.quarter_signal):
                 self.seeburg.insert_quarter()
                 self.quarter_signal = False
@@ -87,7 +95,7 @@ class SeeburgThread(threading.Thread):
                 last_tick_time = tick_time
 
             if (time.time()-last_tick_time > 1):
-                self.show_result()
+                self.handle_endsignal()
 
             time.sleep(0) # .01)
 
@@ -105,9 +113,58 @@ class SeeburgThread(threading.Thread):
           self.after_gap = True
           self.post_gap_count = 1
 
-    def show_result(self):
+    def handle_endsignal(self):
         if (self.after_gap):
-            print "result: ", self.pre_gap_count, self.post_gap_count
+            self.handle_result(self.pre_gap_count, self.post_gap_count)
         self.pre_gap_count = 0
         self.post_gap_count = 0
         self.after_gap = False
+
+    def number_to_letter(self,x):
+        lettermap = {1: "A",
+                     2: "B",
+                     3: "C",
+                     4: "D",
+                     5: "E",
+                     6: "F",
+                     7: "G",
+                     8: "H",
+                     9: "J",
+                    10: "K",
+                    11: "L",
+                    12: "M",
+                    13: "N",
+                    14: "P",
+                    15: "Q",
+                    16: "R",
+                    17: "S",
+                    18: "T",
+                    19: "U",
+                    20: "V"}
+
+        if x in lettermap:
+            return lettermap[x]
+        else:
+            return "%s" % x
+
+    def handle_result(self, pre_gap_count, post_gap_count):
+        print "result:", pre_gap_count, post_gap_count
+
+        if self.vfd:
+            self.vfd.setPosition(0,0)
+            self.vfd.writeStr("Select: %s-%d " % (self.number_to_letter(pre_gap_count), post_gap_count))
+
+    def poll_vfd(self):
+        self.vfd.poll_input()
+        if (self.last_vfd_1 != self.vfd.button1_state):
+            self.last_vfd_1 = self.vfd.button1_state
+            if self.vfd.button1_state:
+                self.quarter_signal = True
+        if (self.last_vfd_2 != self.vfd.button2_state):
+            self.last_vfd_2 = self.vfd.button2_state
+            if self.vfd.button2_state:
+                self.dime_signal = True
+        if (self.last_vfd_3 != self.vfd.button3_state):
+            self.last_vfd_3 = self.vfd.button3_state
+            if self.vfd.button3_state:
+                self.nickel_signal = True

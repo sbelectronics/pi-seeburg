@@ -5,6 +5,8 @@ import tty
 
 import smbus
 from seeburg import SeeburgThread
+from ioexpand import MCP23017
+from vfdcontrol import VFDController
 
 def getchar():
     fd = sys.stdin.fileno()
@@ -25,7 +27,17 @@ def main():
     print ""
 
     bus = smbus.SMBus(1)
-    seeburg = SeeburgThread(bus, 0x20)
+
+    if True:
+        display = VFDController(MCP23017(bus, 0x20), enablePoller = False)
+        display.setDisplay(True, False, False)
+        display.cls()
+        display.writeStr("scott")
+        display.set_color(0)
+    else:
+        display = None
+
+    seeburg = SeeburgThread(bus, 0x21, vfd=display)
     seeburg.start()
 
     stdin_fd = sys.stdin.fileno()
