@@ -4,6 +4,7 @@ src_pdf = None
 cur_pdf = None
 song_count = 0
 pdf_count = 0
+song_table = {}
 
 TITLES_PER_PAGE=32
 
@@ -51,8 +52,17 @@ def add_title(artist, song):
 
     song_count = song_count + 1
 
+def output_song_table():
+    f = file("song_table.py","wt")
+    f.write("song_table = {\n")
+
+    for (k,v) in song_table.items():
+        f.write('     "%s": {"filename": "%s", "artist": "%s", "song": "%s"},\n' % (k, v["filename"], v["artist"], v["song"]))
+
+    f.write("}\n")
+
 def main():
-    global src_pdf, cur_pdf
+    global src_pdf, cur_pdf, song_table
 
     src_pdf = open("rtstrips_data.fdf", "rb").read()
     cur_pdf = src_pdf
@@ -64,11 +74,15 @@ def main():
     f.readline()
 
     for line in f.readlines():
-        (select, artist, song, filename) = line.split(",")
+        (select, artist, song, filename) = line.strip().split(",")
         if (select and artist and song and filename):
             add_title(artist, song)
 
+            song_table[select] = {"filename": filename, "artist": artist, "song": song}
+
     output_pdf()
+
+    output_song_table()
       
 if __name__ == "__main__":
     main()
