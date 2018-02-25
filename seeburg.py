@@ -1,3 +1,4 @@
+import requests
 import time
 import threading
 from ioexpand import PCF8574
@@ -35,7 +36,7 @@ class Seeburg(PCF8574):
             return 1
 
 class SeeburgThread(threading.Thread):
-    def __init__(self, bus, addr, vfd=None):
+    def __init__(self, bus, addr, vfd=None, stereo_url=None, song_table={}):
         super(SeeburgThread, self).__init__()
         self.seeburg = Seeburg(bus, addr)
 
@@ -53,6 +54,9 @@ class SeeburgThread(threading.Thread):
         self.last_vfd_1 = True
         self.last_vfd_2 = True
         self.last_vfd_3 = True
+
+        self.stereo_url = stereo_url
+        self.song_table = song_table
 
     def insert_quarter(self):
         self.quarter_signal = True
@@ -153,6 +157,15 @@ class SeeburgThread(threading.Thread):
         if self.vfd:
             self.vfd.setPosition(0,0)
             self.vfd.writeStr("Select: %s-%d " % (self.number_to_letter(pre_gap_count), post_gap_count))
+
+        if self.stereo_url:
+            select_code = "%s%d" % (self.number_to_letter(pre_gap_count), post_gap_count)
+            song_filename = self.song_table.get(select_code)
+            if song_filename:
+                r = requests.get(self.stereo_url+"queueFile?value=%s" % song_filename.replace(" ","%20"))
+                print "stereo url result:" r.status_code
+            else:
+                print "failed to resolve song select code for %s" % select_code
 
     def poll_vfd(self):
         self.vfd.poll_input()
