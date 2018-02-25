@@ -42,11 +42,12 @@ def parse_args():
     return args
 
 def main():
-    args = parser.parse_args()
+    args = parse_args()
 
     print "q - quarter"
     print "d - dime"
     print "n - nickle"
+    print "r - simulate a result (B1)"
     print "x - exit"
 
     print ""
@@ -89,6 +90,8 @@ def main():
                     seeburg.insert_dime()
                 elif (ch == "n"):
                     seeburg.insert_nickle()
+                elif (ch == "r"):
+                    seeburg.handle_result(2,1)
                 elif (ch == "x"):
                     break
     finally:

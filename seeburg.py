@@ -160,10 +160,11 @@ class SeeburgThread(threading.Thread):
 
         if self.stereo_url:
             select_code = "%s%d" % (self.number_to_letter(pre_gap_count), post_gap_count)
-            song_filename = self.song_table.get(select_code)
-            if song_filename:
-                r = requests.get(self.stereo_url+"queueFile?value=%s" % song_filename.replace(" ","%20"))
-                print "stereo url result:" r.status_code
+            song_dict = self.song_table.get(select_code)
+            if song_dict:
+                song_filename = song_dict["filename"]
+                r = requests.get(self.stereo_url+"/queueFile?value=%s" % song_filename.replace(" ","%20"))
+                print "stereo url result:", r.status_code
             else:
                 print "failed to resolve song select code for %s" % select_code
 
