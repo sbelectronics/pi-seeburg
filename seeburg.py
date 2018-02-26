@@ -2,17 +2,20 @@ import requests
 import time
 import threading
 from ioexpand import PCF8574
+from vfdcontrol import Debouncer
 
 SEEBURG_QUARTER = 4
 SEEBURG_DIME = 1
 SEEBURG_NICKLE = 2
 
+SEEBURG_BUTTON1 = 32
+SEEBURG_BUTTON2 = 64
 SEEBURG_SIGNAL = 128
 
 class Seeburg(PCF8574):
     def __init__(self, bus, addr):
         PCF8574.__init__(self, bus, addr)
-        self.set_gpio(0, SEEBURG_QUARTER | SEEBURG_DIME | SEEBURG_NICKLE | SEEBURG_SIGNAL)
+        self.set_gpio(0, SEEBURG_QUARTER | SEEBURG_DIME | SEEBURG_NICKLE | SEEBURG_BUTTON1 | SEEBURG_BUTTON2 | SEEBURG_SIGNAL)
 
     def insert_quarter(self):
         self.not_gpio(0, SEEBURG_QUARTER)
@@ -35,6 +38,13 @@ class Seeburg(PCF8574):
         else:
             return 1
 
+    def read_button1(self):
+        return ((self.get_gpio(0) & SEEBURG_BUTTON1) != 0)
+
+    def read_button2(self):
+        return ((self.get_gpio(0) & SEEBURG_BUTTON2) != 0)
+
+
 class SeeburgThread(threading.Thread):
     def __init__(self, bus, addr, vfd=None, stereo_url=None, song_table={}):
         super(SeeburgThread, self).__init__()
@@ -55,6 +65,11 @@ class SeeburgThread(threading.Thread):
         self.last_vfd_2 = True
         self.last_vfd_3 = True
 
+        if vfd:
+            self.vfd_debouncer = Debouncer()
+
+        self.debouncer = Debouncer()
+
         self.stereo_url = stereo_url
         self.song_table = song_table
 
@@ -74,6 +89,8 @@ class SeeburgThread(threading.Thread):
         while True:
             if self.vfd:
                 self.poll_vfd()
+
+            self.poll_buttons()
 
             if (self.quarter_signal):
                 self.seeburg.insert_quarter()
@@ -163,13 +180,46 @@ class SeeburgThread(threading.Thread):
             song_dict = self.song_table.get(select_code)
             if song_dict:
                 song_filename = song_dict["filename"]
-                r = requests.get(self.stereo_url+"/queueFile?value=%s" % song_filename.replace(" ","%20"))
+                r = requests.get(self.stereo_url+"/queueFile?value=%s&artist=%s&song=%s" % \
+                                 (song_dict["filename"].replace(" ","%20"),
+                                  song_dict["artist"].replace(" ","%20"),
+                                  song_dict["song"].replace(" ","%20")))
                 print "stereo url result:", r.status_code
             else:
                 print "failed to resolve song select code for %s" % select_code
 
+    def skip_song(self):
+        if self.stereo_url:
+            r = requests.get(self.stereo_url + "/nextSong")
+            print "stereo nextsong url result:", r.status_code
+
+    def poll_buttons(self):
+        (button1_db, button2_db) = self.debouncer.debounce_list([self.seeburg.read_button1(),
+                                                                 self.seeburg.read_button2()])
+        if (button1_db):
+            self.quarter_signal = True
+
+        if (button2_db):
+            self.skip_song()
+
     def poll_vfd(self):
         self.vfd.poll_input()
+        [button1_db, button2_db, button3_db, button_enc_db] = \
+            self.vfd_debouncer.debounce_list([self.vfd.button1_state, self.vfd.button2_state,
+                                              self.vfd.button3_state, self.vfd.button_enc_state])
+
+        if button1_db:
+            self.quarter_signal = True
+
+        if button2_db:
+            self.dime_signal = True
+
+        if button3_db:
+            self.nickel_signal = True
+
+        if button_enc_db:
+            self.skip_song()
+        """
         if (self.last_vfd_1 != self.vfd.button1_state):
             self.last_vfd_1 = self.vfd.button1_state
             if self.vfd.button1_state:
@@ -182,3 +232,4 @@ class SeeburgThread(threading.Thread):
             self.last_vfd_3 = self.vfd.button3_state
             if self.vfd.button3_state:
                 self.nickel_signal = True
+        """
