@@ -74,10 +74,11 @@ def main():
     f.readline()
 
     for line in f.readlines():
-        (select, artist, song, filename) = line.strip().split(",")
-        if (select and artist and song and filename):
+        (number, letter, artist, song, filename) = line.strip().split(",")
+        if (letter and artist and song and filename):
             add_title(artist, song)
 
+            select = "%s%s" % (letter, number)
             song_table[select] = {"filename": filename, "artist": artist, "song": song}
 
     output_pdf()
