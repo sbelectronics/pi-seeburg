@@ -1,3 +1,4 @@
+import csv
 import os
 
 src_pdf = None
@@ -67,14 +68,20 @@ def main():
     src_pdf = open("rtstrips_data.fdf", "rb").read()
     cur_pdf = src_pdf
 
-    open("foo.fdf", "wb").write(cur_pdf)
-
     f = open("songs.csv", "rt")
+    reader = csv.reader(f)
+    for row in reader:
+        (number, letter, artist, song, filename) = row # line.strip().split(",",4)
+        number = number.strip()
+        letter = letter.strip()
+        artist = artist.strip()
+        song = song.strip()
+        filename = filename.strip()
 
-    f.readline()
+        if (number=="Number"):
+            # header at the top of the page
+            continue
 
-    for line in f.readlines():
-        (number, letter, artist, song, filename) = line.strip().split(",")
         if (letter and artist and song and filename):
             add_title(artist, song)
 
