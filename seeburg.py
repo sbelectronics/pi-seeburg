@@ -73,6 +73,27 @@ class SeeburgThread(threading.Thread):
         self.stereo_url = stereo_url
         self.song_table = song_table
 
+        self.lettermap = {1: "A",
+                     2: "B",
+                     3: "C",
+                     4: "D",
+                     5: "E",
+                     6: "F",
+                     7: "G",
+                     8: "H",
+                     9: "J",
+                    10: "K",
+                    11: "L",
+                    12: "M",
+                    13: "N",
+                    14: "P",
+                    15: "Q",
+                    16: "R",
+                    17: "S",
+                    18: "T",
+                    19: "U",
+                    20: "V"}
+
     def insert_quarter(self):
         self.quarter_signal = True
 
@@ -142,31 +163,16 @@ class SeeburgThread(threading.Thread):
         self.after_gap = False
 
     def number_to_letter(self,x):
-        lettermap = {1: "A",
-                     2: "B",
-                     3: "C",
-                     4: "D",
-                     5: "E",
-                     6: "F",
-                     7: "G",
-                     8: "H",
-                     9: "J",
-                    10: "K",
-                    11: "L",
-                    12: "M",
-                    13: "N",
-                    14: "P",
-                    15: "Q",
-                    16: "R",
-                    17: "S",
-                    18: "T",
-                    19: "U",
-                    20: "V"}
-
-        if x in lettermap:
-            return lettermap[x]
+        if x in self.lettermap:
+            return self.lettermap[x]
         else:
             return "%s" % x
+
+    def letter_to_number(self,x):
+        numbermap = {}
+        for (k,v) in self.lettermap.items():
+            numbermap[v] = k
+        return int(numbermap[x])
 
     def handle_result(self, pre_gap_count, post_gap_count):
         print "result:", pre_gap_count, post_gap_count

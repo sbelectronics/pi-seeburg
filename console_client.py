@@ -3,6 +3,7 @@ import os
 import select
 import sys
 import termios
+import traceback
 import tty
 
 import smbus
@@ -47,7 +48,7 @@ def main():
     print "q - quarter"
     print "d - dime"
     print "n - nickle"
-    print "r - simulate a result (B1)"
+    print "r - simulate a result"
     print "x - exit"
 
     print ""
@@ -91,7 +92,12 @@ def main():
                 elif (ch == "n"):
                     seeburg.insert_nickle()
                 elif (ch == "r"):
-                    seeburg.handle_result(2,1)
+                    selection = raw_input("Code (letter+digit):")
+                    try:
+                        print
+                        seeburg.handle_result(seeburg.letter_to_number(selection[0]), int(selection[1:]))
+                    except:
+                        traceback.print_exc()
                 elif (ch == "x"):
                     break
     finally:
