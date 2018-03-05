@@ -6,7 +6,7 @@ from vfdcontrol import Debouncer
 
 SEEBURG_QUARTER = 4
 SEEBURG_DIME = 1
-SEEBURG_NICKLE = 2
+SEEBURG_NICKEL = 2
 
 SEEBURG_BUTTON1 = 32
 SEEBURG_BUTTON2 = 64
@@ -15,7 +15,7 @@ SEEBURG_SIGNAL = 128
 class Seeburg(PCF8574):
     def __init__(self, bus, addr):
         PCF8574.__init__(self, bus, addr)
-        self.set_gpio(0, SEEBURG_QUARTER | SEEBURG_DIME | SEEBURG_NICKLE | SEEBURG_BUTTON1 | SEEBURG_BUTTON2 | SEEBURG_SIGNAL)
+        self.set_gpio(0, SEEBURG_QUARTER | SEEBURG_DIME | SEEBURG_NICKEL | SEEBURG_BUTTON1 | SEEBURG_BUTTON2 | SEEBURG_SIGNAL)
 
     def insert_quarter(self):
         self.not_gpio(0, SEEBURG_QUARTER)
@@ -27,10 +27,10 @@ class Seeburg(PCF8574):
         time.sleep(0.25)
         self.or_gpio(0, SEEBURG_DIME)
 
-    def insert_nickle(self):
-        self.not_gpio(0, SEEBURG_NICKLE)
+    def insert_nickel(self):
+        self.not_gpio(0, SEEBURG_NICKEL)
         time.sleep(0.25)
-        self.or_gpio(0, SEEBURG_NICKLE)
+        self.or_gpio(0, SEEBURG_NICKEL)
 
     def read_signal(self):
         if (self.get_gpio(0) & SEEBURG_SIGNAL) != 0:
@@ -122,7 +122,7 @@ class SeeburgThread(threading.Thread):
                 self.dime_signal = False
 
             if (self.nickel_signal):
-                self.seeburg.insert_nickle()
+                self.seeburg.insert_nickel()
                 self.nickel_signal = False
 
             state = self.seeburg.read_signal()

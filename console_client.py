@@ -47,7 +47,7 @@ def main():
 
     print "q - quarter"
     print "d - dime"
-    print "n - nickle"
+    print "n - nickel"
     print "r - simulate a result"
     print "x - exit"
 
@@ -90,7 +90,7 @@ def main():
                 elif (ch == "d"):
                     seeburg.insert_dime()
                 elif (ch == "n"):
-                    seeburg.insert_nickle()
+                    seeburg.insert_nickel()
                 elif (ch == "r"):
                     selection = raw_input("Code (letter+digit):")
                     try:
