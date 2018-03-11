@@ -3,6 +3,7 @@ import os
 import select
 import sys
 import termios
+import time
 import traceback
 import tty
 
@@ -24,6 +25,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     defs = {"vfd": False,
+            "interactive": True,
             "stereo_url": None}
 
     _help = 'Enable VFD display (default: %s)' % defs['vfd']
@@ -38,20 +40,18 @@ def parse_args():
         default=defs['stereo_url'],
         help=_help)
 
+    _help = 'Disable interactive console (default: %s)' % defs['interactive']
+    parser.add_argument(
+        '-N', '--nointeractive', dest='interactive', action='store_false',
+        default=defs['interactive'],
+        help=_help)
+
     args = parser.parse_args()
 
     return args
 
 def main():
     args = parse_args()
-
-    print "q - quarter"
-    print "d - dime"
-    print "n - nickel"
-    print "r - simulate a result"
-    print "x - exit"
-
-    print ""
 
     bus = smbus.SMBus(1)
 
@@ -73,35 +73,48 @@ def main():
     seeburg = SeeburgThread(bus, 0x21, vfd=display, stereo_url=args.stereo_url, song_table=song_table)
     seeburg.start()
 
-    stdin_fd = sys.stdin.fileno()
-    new_term = termios.tcgetattr(stdin_fd)
-    old_term = termios.tcgetattr(stdin_fd)
-    new_term[3] = (new_term[3] & ~termios.ICANON & ~termios.ECHO)
-    termios.tcsetattr(stdin_fd, termios.TCSAFLUSH, new_term)
+    if args.interactive:
+        print "q - quarter"
+        print "d - dime"
+        print "n - nickel"
+        print "r - simulate a result"
+        print "x - exit"
 
-    try:
+        print ""
+
+        stdin_fd = sys.stdin.fileno()
+        new_term = termios.tcgetattr(stdin_fd)
+        old_term = termios.tcgetattr(stdin_fd)
+        new_term[3] = (new_term[3] & ~termios.ICANON & ~termios.ECHO)
+        termios.tcsetattr(stdin_fd, termios.TCSAFLUSH, new_term)
+
+        try:
+            while True:
+                dr,dw,de = select.select([sys.stdin], [], [], 0.1)
+                if dr != []:
+                    ch = sys.stdin.read(1)
+
+                    if (ch == "q"):
+                        seeburg.insert_quarter()
+                    elif (ch == "d"):
+                        seeburg.insert_dime()
+                    elif (ch == "n"):
+                        seeburg.insert_nickel()
+                    elif (ch == "r"):
+                        selection = raw_input("Code (letter+digit):")
+                        try:
+                            print
+                            seeburg.handle_result(seeburg.letter_to_number(selection[0]), int(selection[1:]))
+                        except:
+                            traceback.print_exc()
+                    elif (ch == "x"):
+                        break
+        finally:
+            termios.tcsetattr(stdin_fd, termios.TCSAFLUSH, old_term)
+
+    else:
         while True:
-            dr,dw,de = select.select([sys.stdin], [], [], 0.1)
-            if dr != []:
-                ch = sys.stdin.read(1)
-
-                if (ch == "q"):
-                    seeburg.insert_quarter()
-                elif (ch == "d"):
-                    seeburg.insert_dime()
-                elif (ch == "n"):
-                    seeburg.insert_nickel()
-                elif (ch == "r"):
-                    selection = raw_input("Code (letter+digit):")
-                    try:
-                        print
-                        seeburg.handle_result(seeburg.letter_to_number(selection[0]), int(selection[1:]))
-                    except:
-                        traceback.print_exc()
-                elif (ch == "x"):
-                    break
-    finally:
-        termios.tcsetattr(stdin_fd, termios.TCSAFLUSH, old_term)
+            time.sleep(1);
 
 if __name__ == "__main__":
     main()
