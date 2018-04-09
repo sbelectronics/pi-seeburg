@@ -1,0 +1,22 @@
+{% load staticfiles %}
+
+<html><head>
+  <script src="{% static 'js/vendor/jquery-1.9.1.js' %}"></script>
+  <script src="{% static 'js/vendor/jquery-ui.js' %}"></script>
+  <script src="{% static 'js/vendor/chosen.jquery.js' %}"></script>
+  <script src="{% static 'js/seeburg.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'css/bootstrap-3.2.0.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}">
+  <link rel="stylesheet" href="{% static 'css/stereoui.css' %}">
+  <link rel="stylesheet" href="{% static 'css/color-buttons.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chosen.css' %}">
+</head>
+<body>
+
+<div id="coins" class="box">
+<button class ="btn btn-green btn-input" id="quarter">Quarter</button>
+<button class ="btn btn-green btn-input" id="dime">Dime</button>
+<button class ="btn btn-green btn-input" id="nickel">Nickel</button>
+</div>
+
+</body>

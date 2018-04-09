@@ -1,4 +1,3 @@
-import argparse
 import os
 import select
 import sys
@@ -8,6 +7,7 @@ import traceback
 import tty
 
 import smbus
+from seeburg_manager import parse_args
 from seeburg import SeeburgThread
 from ioexpand import MCP23017
 
@@ -20,35 +20,6 @@ def getchar():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_tcattr)
     return ch
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    defs = {"vfd": False,
-            "interactive": True,
-            "stereo_url": None}
-
-    _help = 'Enable VFD display (default: %s)' % defs['vfd']
-    parser.add_argument(
-        '-V', '--vfd', dest='vfd', action='store_true',
-        default=defs['vfd'],
-        help=_help)
-
-    _help = 'URL of Stereo to control (default: %s)' % defs['stereo_url']
-    parser.add_argument(
-        '-S', '--stereo_url', dest='stereo_url', action='store',
-        default=defs['stereo_url'],
-        help=_help)
-
-    _help = 'Disable interactive console (default: %s)' % defs['interactive']
-    parser.add_argument(
-        '-N', '--nointeractive', dest='interactive', action='store_false',
-        default=defs['interactive'],
-        help=_help)
-
-    args = parser.parse_args()
-
-    return args
 
 def main():
     args = parse_args()
